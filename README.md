@@ -1,8 +1,11 @@
-# Fire Perimeter Analysis
+# CTA Crime Analysis
 
-This project processes and visualizes historical fire perimeter data and Canadian CPI data.
+## Project Overview
+This project analyzes how crime exposure near Chicago CTA L stations relates to ridership patterns over time 2024-2025. Using station-level ridership data, geocoded crime incidents, and spatial joins, we produce static visualizations to inform how the City of Chicago and CTA might better allocate transit security resources to improve transit utilization.
 
-## Setup
+This is a descriptive, non-causal analysis focused on visualization and policy interpretation.
+
+## Setup - UPDATE EVERYTHING 
 
 ```bash
 conda env create -f environment.yml
