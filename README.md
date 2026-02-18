@@ -1,9 +1,7 @@
 # CTA Crime Analysis
 
 ## Project Overview
-This project analyzes how crime exposure near Chicago CTA L stations relates to ridership patterns over time 2024-2025. Using station-level ridership data, geocoded crime incidents, and spatial joins, we produce static visualizations to inform how the City of Chicago and CTA might better allocate transit security resources to improve transit utilization.
-
-This is a descriptive, non-causal analysis focused on visualization and policy interpretation.
+This project analyzes how crime exposure near Chicago CTA L stations relates to ridership patterns over time 2022-onwards. Using station-level ridership data, geocoded crime incidents, and spatial joins, we produce static visualizations to inform how the City of Chicago and CTA might better allocate transit security resources to improve transit utilization.
 
 The external data folder for final project is [here](https://www.dropbox.com/scl/fo/sq360chzws1wlj3o2qyop/AATdS7xIi-0s0bwWrSTLXgI?rlkey=xgfa2m0xq61bxsp7ogfxhpiu0&st=jy69syqm&dl=0)
 
