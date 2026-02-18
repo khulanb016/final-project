@@ -5,6 +5,8 @@ This project analyzes how crime exposure near Chicago CTA L stations relates to 
 
 This is a descriptive, non-causal analysis focused on visualization and policy interpretation.
 
+The external data folder for final project is [here](https://www.dropbox.com/scl/fo/sq360chzws1wlj3o2qyop/AATdS7xIi-0s0bwWrSTLXgI?rlkey=xgfa2m0xq61bxsp7ogfxhpiu0&st=jy69syqm&dl=0)
+
 ```bash
 app.py - Main Streamlit application
 filters.py - Filter components (years, lines, crime types)
