@@ -5,6 +5,15 @@ This project analyzes how crime exposure near Chicago CTA L stations relates to 
 
 This is a descriptive, non-causal analysis focused on visualization and policy interpretation.
 
+```bash
+app.py - Main Streamlit application
+filters.py - Filter components (years, lines, crime types)
+plots.py - Visualization functions
+analysis.py - Statistical analysis
+data_processor.py - Data loading and cleaning
+stations.py - Station/line data management
+```
+
 ## Setup - UPDATE EVERYTHING 
 
 ```bash
@@ -15,16 +24,31 @@ conda activate fire_analysis
 ## Project Structure
 
 ```
-data/
-  raw-data/           # Raw data files
-    fire.csv          # Historical fire perimeter data
-    canadian_cpi.csv  # Canadian Consumer Price Index data
-  derived-data/       # Filtered data and output plots
-    fire_filtered.gpkg  # Fire data filtered to post-2015
-    cpi_filtered.csv    # CPI data filtered to 2020 onwards
-code/
-  preprocessing.py    # Filters fire and CPI data
-  plot_fires.py       # Plots fire perimeters
+draft-final-project/
+  code/
+    
+  data/
+    raw-data/           # Raw data files
+      CTA_Ridership_L_Station_Entries_Daily_Totals_2022-2026.csv          # Ridership data 2022-2026
+      Cpd_Crime_Incidents  #Chicago Crime Data
+      CTA_RailStations/
+        CTA_RailStations.cpg
+        CTA_RailStations.dbf
+        CTA_RailStations.prj
+        CTA_RailStations.sbn
+        CTA_RailStations.sbx
+        CTA_RailStations.shp
+        CTA_RailStations.shp.xml
+        CTA_RailStations.shx  
+    derived-data/
+        
+  code/
+    preprocessing.py    # Filters Ridership, L' station locations, and Crime data
+    plot_crime.py       # Plots crime perimeters
+    config.py           # Data configurations
+    filters.py          # filtering multi-select year, L-line, crime type picker
+    visualizations.py   # spatial, correlations, crime breakdown visualization plots
+    app.py              # Main Streamlit application
 ```
 
 ## Usage
@@ -34,7 +58,7 @@ code/
    python code/preprocessing.py
    ```
 
-2. Generate the fire perimeter plot:
+2. Generate the crime perimeter plot:
    ```bash
-   python code/plot_fires.py
+   python code/plot_crime.py
    ```
