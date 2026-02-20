@@ -7,10 +7,11 @@ The external data folder for final project is [here](https://www.dropbox.com/scl
 
 ```bash
 app.py - Main Streamlit application
-filters.py - Filter components (years, lines, crime types)
-plots.py - Visualization functions
+visualizations.py - Visualization functions
 analysis.py - Statistical analysis
-data_processor.py - Data loading and cleaning
+preprocessing.py - Data loading and cleaning
+
+filters.py - Filter components (years, lines, crime types)
 stations.py - Station/line data management
 ```
 
