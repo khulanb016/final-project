@@ -8,3 +8,4 @@ data/derived-data/
 __pycache__/
 *.py[cod]
 .DS_Store
+.Rhistory
