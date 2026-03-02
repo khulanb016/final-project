@@ -1,7 +1,6 @@
 #Import relevant packages and setting PATH
 import geopandas as gpd
 import pandas as pd
-import matplotlib.pyplot as plt
 from pathlib import Path
 from shapely import Point
 
