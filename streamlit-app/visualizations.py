@@ -3,9 +3,8 @@ import pandas as pd
 import pydeck as pdk
 from pandas import DataFrame
 
-
-def map_deck(stations: DataFrame, line_colors: dict) -> pdk.Deck:
 # Pydeck map of all CTA stations colored by line.
+def map_deck(stations, line_colors):
     def hex_to_rgb(hex_color: str) -> list[int]:
         hex_color = hex_color.lstrip("#")
         return [int(hex_color[i:i + 2], 16) for i in (0, 2, 4)]
@@ -30,9 +29,8 @@ def map_deck(stations: DataFrame, line_colors: dict) -> pdk.Deck:
         tooltip={"text": "{LONGNAME}"},
     )
 
-
-def top_stations_fig(df: DataFrame) -> alt.Chart:
 # Top 10 stations by total nearby crime — main finding for the presentation.
+def top_stations_fig(df):
     top = (
         df.groupby("stationname_mapped")["crime_count"]
         .sum()
@@ -55,9 +53,8 @@ def top_stations_fig(df: DataFrame) -> alt.Chart:
         )
     )
 
-
-def scatter_fig(df: DataFrame) -> alt.LayerChart:
 # Crime vs ridership scatter with trendline — shows the key correlation finding.
+def scatter_fig(df):
     clean = df[["stationname_mapped", "crime_count", "rides"]].dropna()
 
     scatter = (
@@ -89,9 +86,8 @@ def scatter_fig(df: DataFrame) -> alt.LayerChart:
         )
     )
 
-
-def dual_axis_trend_fig(df: DataFrame) -> alt.LayerChart:
 # Crime and ridership plotted on the same timeline with independent y-axes.
+def dual_axis_trend_fig(df):
     agg = (
         df.groupby(["year", "month"])
         .agg(crime_count=("crime_count", "sum"), rides=("rides", "sum"))
@@ -123,9 +119,8 @@ def dual_axis_trend_fig(df: DataFrame) -> alt.LayerChart:
         .properties(title="Crime vs. Ridership Over Time", width=700, height=320)
     )
 
-
-def crime_trend_fig(df: DataFrame) -> alt.Chart:
 # Monthly crime trend over time — shows overall pattern across the system.
+def crime_trend_fig(df):
     monthly = (
         df.groupby(["year", "month"])["crime_count"]
         .sum()
