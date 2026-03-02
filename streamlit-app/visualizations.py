@@ -1,11 +1,10 @@
 import altair as alt
 import pandas as pd
 import pydeck as pdk
-from pandas import DataFrame
 
 # Pydeck map of all CTA stations colored by line.
 def map_deck(stations, line_colors):
-    def hex_to_rgb(hex_color: str) -> list[int]:
+    def hex_to_rgb(hex_color):         
         hex_color = hex_color.lstrip("#")
         return [int(hex_color[i:i + 2], 16) for i in (0, 2, 4)]
 
@@ -29,7 +28,7 @@ def map_deck(stations, line_colors):
         tooltip={"text": "{LONGNAME}"},
     )
 
-# Top 10 stations by total nearby crime — main finding for the presentation.
+# Top 10 stations by total nearby crime
 def top_stations_fig(df):
     top = (
         df.groupby("stationname_mapped")["crime_count"]
@@ -43,7 +42,7 @@ def top_stations_fig(df):
         alt.Chart(top)
         .mark_bar(color="#C60C30")
         .encode(
-            alt.X("crime_count:Q", title="Total Crimes (2022–2026)"),
+            alt.X("crime_count:Q", title="Total Crimes"),
             alt.Y("stationname_mapped:N", title="Station", sort="-x"),
         )
         .properties(
@@ -53,24 +52,60 @@ def top_stations_fig(df):
         )
     )
 
-# Crime vs ridership scatter with trendline — shows the key correlation finding.
-def scatter_fig(df):
-    clean = df[["stationname_mapped", "crime_count", "rides"]].dropna()
+# Top 10 crime types near CTA stations — companion to top_stations_fig.
+def crime_type_fig(df):
+    top = (
+        df.groupby("Primary Type")["crime_count"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(10)
+        .reset_index()
+    )
+    return (
+        alt.Chart(top)
+        .mark_bar(color="#522398")
+        .encode(
+            alt.X("crime_count:Q", title="Total Count"),
+            alt.Y("Primary Type:N", title="Crime Type", sort="-x"),
+        )
+        .properties(
+            title="Top 10 Crime Types Near CTA Stations",
+            width=500,
+            height=320,
+        )
+    )
+
+
+# Scatter of total crime vs total ridership per station, colored by line.
+def correlation_scatter_fig(df, line_colors):
+    agg = (
+        df.groupby(["stationname_mapped", "primary_line"])
+        .agg(crime_count=("crime_count", "sum"), rides=("rides", "sum"))
+        .reset_index()
+    )
+
+    domain = list(line_colors.keys())
+    range_ = list(line_colors.values())
 
     scatter = (
-        alt.Chart(clean)
-        .mark_circle(opacity=0.4, color="#555555")
+        alt.Chart(agg)
+        .mark_circle(opacity=0.7, size=80)
         .encode(
-            alt.X("crime_count:Q", title="Monthly Crime Count (within 400m)"),
-            alt.Y("rides:Q", title="Monthly Rides"),
-            alt.Tooltip(["stationname_mapped:N", "crime_count:Q", "rides:Q"]),
+            alt.X("crime_count:Q", title="Total Crime Incidents"),
+            alt.Y("rides:Q", title="Total Rides"),
+            alt.Color(
+                "primary_line:N",
+                scale=alt.Scale(domain=domain, range=range_),
+                title="Line",
+            ),
+            alt.Tooltip(["stationname_mapped:N", "primary_line:N", "crime_count:Q", "rides:Q"]),
         )
     )
 
     trendline = (
-        alt.Chart(clean)
+        alt.Chart(agg)
         .transform_regression("crime_count", "rides")
-        .mark_line(color="#C60C30", strokeDash=[4, 4])
+        .mark_line(color="#555555", strokeDash=[4, 4])
         .encode(
             alt.X("crime_count:Q"),
             alt.Y("rides:Q"),
@@ -80,9 +115,9 @@ def scatter_fig(df):
     return (
         (scatter + trendline)
         .properties(
-            title="Monthly Crime Count vs. Ridership per Station",
-            width=500,
-            height=320,
+            title="Total Crime vs. Total Ridership by Station",
+            width=700,
+            height=400,
         )
     )
 
@@ -117,27 +152,4 @@ def dual_axis_trend_fig(df):
         alt.layer(crime_line, rides_line)
         .resolve_scale(y="independent")
         .properties(title="Crime vs. Ridership Over Time", width=700, height=320)
-    )
-
-# Monthly crime trend over time — shows overall pattern across the system.
-def crime_trend_fig(df):
-    monthly = (
-        df.groupby(["year", "month"])["crime_count"]
-        .sum()
-        .reset_index()
-    )
-    monthly["date"] = pd.to_datetime(monthly[["year", "month"]].assign(day=1))
-
-    return (
-        alt.Chart(monthly)
-        .mark_line(color="#C60C30")
-        .encode(
-            alt.X("date:T", title="Month"),
-            alt.Y("crime_count:Q", title="Crime Count"),
-        )
-        .properties(
-            title="Total Monthly Crime Near CTA Stations",
-            width=500,
-            height=280,
-        )
     )
