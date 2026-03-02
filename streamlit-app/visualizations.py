@@ -153,3 +153,4 @@ def dual_axis_trend_fig(df):
         .resolve_scale(y="independent")
         .properties(title="Crime vs. Ridership Over Time", width=700, height=320)
     )
+

@@ -3,7 +3,7 @@ from pandas import DataFrame
 from scipy import stats
 
 # Compute per-station Pearson r between monthly crime count and rides.
-def get_station_correlations(df: DataFrame) -> DataFrame:
+def get_station_correlations(df: DataFrame):
     results = []
     for station, group in df.groupby("stationname_mapped"):
         clean = group[["crime_count", "rides"]].dropna()

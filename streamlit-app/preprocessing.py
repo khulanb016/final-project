@@ -9,7 +9,7 @@ raw_data_path = user_path.parent/ "data" / "raw-data"
 derived_data_path = user_path.parent/ "data" / "derived-data"
 
 #Loading all datasets
-df_crime = pd.read_csv("https://www.dropbox.com/scl/fi/w9sy3yfx85ombqn1ef125/Crimes_-_2001_to_Present_20260218.csv?rlkey=i951trnwbtaaebfr7ots1eelt&e=1&st=4x82q2z7&dl=1")
+df_crime = pd.read_csv(raw_data_path / "Crimes_-_2001_to_Present_20260218.csv")
 df_ridership = pd.read_csv(raw_data_path / "CTA_Ridership_L_Station_Entries_Daily_Totals_2022-2026.csv")
 gdf_station = gpd.read_file(raw_data_path / "CTA_RailStations/CTA_RailStations.shp")
 gdf_lines = gpd.read_file(raw_data_path / "CTA_RailLines/CTA_RailLines.shp")

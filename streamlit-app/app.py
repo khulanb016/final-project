@@ -1,11 +1,9 @@
 import sys
-import altair as alt
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
 
-sys.path.insert(0, "streamlit-app")
 from visualizations import map_deck, top_stations_fig, crime_type_fig, correlation_scatter_fig, dual_axis_trend_fig
 from analysis import get_station_correlations
 
