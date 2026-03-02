@@ -71,3 +71,12 @@ This performs a spatial join: for each station, it counts crime incidents within
 ```bash
 streamlit run streamlit-app/app.py
 ```
+
+**5. Knit the writeup:**
+
+```bash
+quarto render final_project.qmd --to html
+quarto render final_project.qmd --to pdf
+```
+
+---
