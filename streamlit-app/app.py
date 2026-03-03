@@ -170,27 +170,27 @@ if monthly is not None:
     col_left, col_right = st.columns(2)
     with col_left:
         st.subheader("Top 10 Stations by Nearby Crime")
-        st.altair_chart(top_stations_fig(monthly), width='stretch)
+        st.altair_chart(top_stations_fig(monthly), use_container_width='stretch)
     with col_right:
         st.subheader("Top 10 Crime Types Near Stations")
-        st.altair_chart(crime_type_fig(crime_types), width='stretch)
+        st.altair_chart(crime_type_fig(crime_types), use_container_width='stretch)
 
     st.divider()
 
     st.subheader("Total Crime vs. Total Ridership by Station")
-    st.altair_chart(correlation_scatter_fig(monthly, LINE_COLORS), width='stretch)
+    st.altair_chart(correlation_scatter_fig(monthly, LINE_COLORS), use_container_width='stretch)
 
     st.divider()
 
     st.subheader("Crime & Ridership Over Time")
-    st.altair_chart(dual_axis_trend_fig(monthly), width='stretch)
+    st.altair_chart(dual_axis_trend_fig(monthly), use_container_width='stretch)
 
     st.divider()
 
     st.subheader("Correlation Analysis")
     st.markdown("**Per-Station Correlations**")
     corr_df = get_station_correlations(monthly)
-    st.dataframe(corr_df, width='stretch, height=350)
+    st.dataframe(corr_df, use_container_width='stretch, height=350)
 
 else:
     st.info("Run `python streamlit-app/preprocessing.py` first to enable crime analysis.")
