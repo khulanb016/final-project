@@ -132,21 +132,19 @@ def make_chart(final_data):
         )
     return Chart
 
+
+
 # --- STREAMLIT USER INTERFACE ---
 
 st.set_page_config(page_title="CTA Crime & Ridership Dashboard", layout="wide")
 
 st.title("🚇 CTA Station Analysis: Crime vs. Ridership")
-st.markdown("""
-This dashboard explores the relationship between CTA 'L' station ridership and reported crime incidents.
-Select your filters in the sidebar to update the visualization.
-""")
 
-# 1. Sidebar Filters
-st.sidebar.header("Filter Options")
+# Create the Tabs first
+tab_analysis, tab_map = st.tabs(["📊 Statistical Analysis", "🗺️ Geographic Map"])
 
-# Year Range Selector
-# Note: Using your default ranges 2022-2025
+# 1. Global Sidebar Elements (Common to both tabs)
+st.sidebar.header("Scatterplot Filters")
 year_range = st.sidebar.slider(
     "Select Year Range",
     min_value=2022,
@@ -155,48 +153,104 @@ year_range = st.sidebar.slider(
 )
 start_yr, end_yr = year_range
 
-# Crime Type Selector
-# We'll include the custom categories and some common primary types
-valid_crimes = sorted(derived_crime[COL_PRIMARY_TYPE].dropna().unique().tolist())
-
-crime_options = ["All", "Violent", "Non-Violent"] + valid_crimes
-selected_crime = st.sidebar.selectbox("Select Crime Category/Type", options=crime_options)
-
-# 2. Data Processing
-# Calling your existing aggregator function with user inputs
-with st.spinner("Aggregating data..."):
-    filtered_data = aggregator(
-        crime_type=selected_crime, 
-        start_yr=start_yr, 
-        end_yr=end_yr
+# 2. Tab-Specific Sidebar & Content
+with tab_analysis:
+    # Sidebar elements for Analysis
+    valid_crimes = sorted(derived_crime[COL_PRIMARY_TYPE].dropna().unique().tolist())
+    crime_options = ["All", "Violent", "Non-Violent"] + valid_crimes
+    selected_crime = st.sidebar.selectbox(
+        "Select Crime Category/Type", 
+        options=crime_options, 
+        key="analysis_crime_sel"
     )
 
-# 3. Main Dashboard Layout
-col1, col2 = st.columns([3, 1])
+    # Data Processing
+    with st.spinner("Aggregating analysis data..."):
+        filtered_data = aggregator(
+            crime_type=selected_crime, 
+            start_yr=start_yr, 
+            end_yr=end_yr
+        )
 
-with col1:
-    st.subheader(f"Analysis: {selected_crime} Crimes ({start_yr}-{end_yr})")
-    # Calling your existing make_chart function
-    chart = make_chart(filtered_data)
-    st.altair_chart(chart, use_container_width=True)
+    # UI Layout for Analysis
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.subheader(f"Analysis: {selected_crime} Crimes ({start_yr}-{end_yr})")
+        chart = make_chart(filtered_data)
+        st.altair_chart(chart, use_container_width=True)
 
-with col2:
-    st.subheader("Summary Metrics")
-    total_rides = filtered_data['rides'].sum()
-    total_crimes = filtered_data['crime_count'].sum()
+    with col2:
+        st.subheader("Summary Metrics")
+        total_rides = filtered_data['rides'].sum()
+        total_crimes = filtered_data['crime_count'].sum()
+        st.metric("Total Ridership", f"{total_rides:,}")
+        st.metric("Total Incidents", f"{int(total_crimes):,}")
+        avg_rate = (total_crimes / (total_rides / 100000)) if total_rides > 0 else 0
+        st.metric("Avg Crime Rate", f"{avg_rate:.2f}", help="Incidents per 100k riders")
+
+with tab_map:
+    # Sidebar elements for Map
+    st.sidebar.divider()
+    st.sidebar.subheader("Map Controls")
     
-    st.metric("Total Ridership", f"{total_rides:,}")
-    st.metric("Total Incidents", f"{int(total_crimes):,}")
+    map_metric = st.sidebar.radio(
+        "Circle Size Reflects:",
+        options=["Total Crimes", "Crimes per 100k Riders", "Total Riders"],
+        key="map_metric_choice"
+    )
     
-    # Simple calculation for context
-    avg_rate = (total_crimes / (total_rides / 100000)) if total_rides > 0 else 0
-    st.metric("Avg Crime Rate", f"{avg_rate:.2f}", help="Incidents per 100k riders")
+    # Use aggregator to get the ridership and crime totals per station
+    map_filtered_data = aggregator(crime_type="All", start_yr=start_yr, end_yr=end_yr)
 
-# 4. Data Preview
-with st.expander("View Raw Aggregated Data"):
-    st.dataframe(filtered_data.sort_values(by="crime_count", ascending=False), use_container_width=True)
+    # Prepare spatial data
+    import pydeck as pdk
+    # We drop the 'rides' column from map_df if it exists to prevent merge conflicts (rides_x/rides_y)
+    map_df = derived_crime.to_crs("EPSG:4326").copy()
+    if 'rides' in map_df.columns:
+        map_df = map_df.drop(columns=['rides'])
+        
+    map_df['lat'] = map_df.geometry.y
+    map_df['lon'] = map_df.geometry.x
+    
+    # Merge spatial points with the aggregated data
+    map_plot_df = map_df.drop_duplicates(subset=[COL_STATION]).merge(
+        map_filtered_data, 
+        left_on=COL_STATION, 
+        right_on="stationname_mapped"
+    )
 
-derived_crime[COL_PRIMARY_TYPE].unique()
+    # Now 'rides' is guaranteed to be the column from map_filtered_data
+    map_plot_df["crime_rate"] = (map_plot_df["crime_count"] / (map_plot_df["rides"] / 100000)).fillna(0)
+
+    # Determine Radius based on Selection
+    if map_metric == "Total Crimes":
+        # Using a multiplier of 2 for visible pixel scaling
+        map_plot_df["radius_val"] = 5 + (map_plot_df["crime_count"]/400)
+    elif map_metric == "Crimes per 100k Riders":
+        map_plot_df["radius_val"] = 5 + (map_plot_df["crime_rate"]/10)
+    else: # Total Riders
+        # Ridership numbers are large, so we scale them down significantly for pixel radius
+        map_plot_df["radius_val"] = 5 + (map_plot_df["rides"] / 500000)
+
+    # Map Layer
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        map_plot_df,
+        get_position=["lon", "lat"],
+        get_color="[200, 30, 0, 160]",
+        radius_units="pixels",
+        get_radius="radius_val",
+        pickable=True,
+    )
+
+    view_state = pdk.ViewState(latitude=41.8781, longitude=-87.6298, zoom=11)
+
+    st.subheader(f"CTA Station Hotspots (By {map_metric})")
+    st.pydeck_chart(pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip={"text": "Station: {stationname_mapped}\nCrimes: {crime_count}\nRate: {crime_rate:.2f}\nTotal Rides: {rides}"}
+    ))
 
 
     
