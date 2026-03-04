@@ -1,9 +1,7 @@
 pandas
 geopandas
 altair
-streamlit 
 pydeck
 seaborn
 matplotlib
 requests
-io
