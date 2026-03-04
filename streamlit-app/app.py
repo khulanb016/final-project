@@ -12,7 +12,7 @@ raw_data_path = user_path / "data" / "raw-data"
 derived_data_path = user_path / "data" / "derived-data"
 
 #Load Data
-derived_crime = gpd.read_file("https://www.dropbox.com/scl/fi/90xiyc5az9kyuroa8xmg8/derived_crime.zip?rlkey=u3d9t60gno2z1m1kiq5cjg63f&st=fpp2qi55&dl=1")
+derived_crime = gpd.read_file("zip://https://www.dropbox.com/scl/fi/90xiyc5az9kyuroa8xmg8/derived_crime.zip?rlkey=u3d9t60gno2z1m1kiq5cjg63f&st=fpp2qi55&dl=1")
 
 #File Identifiers
 RIDERSHIP_CSV  = "CTA_Ridership_L_Station_Entries_Daily_Totals_2022-2026.csv"
