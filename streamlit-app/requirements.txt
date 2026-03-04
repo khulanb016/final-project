@@ -4,3 +4,5 @@ altair
 pydeck
 matplotlib
 seaborn
+requests
+io
