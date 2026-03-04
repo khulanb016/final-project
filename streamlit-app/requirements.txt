@@ -1,4 +1,7 @@
-altair
+streamlit
 pandas
 geopandas
-pathlib
+altair
+pydeck
+matplotlib
+seaborn
