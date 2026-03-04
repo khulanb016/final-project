@@ -1,12 +1,8 @@
-import sys
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
 import altair as alt
-
-from visualizations import map_deck, top_stations_fig, crime_type_fig, correlation_scatter_fig, dual_axis_trend_fig
-from analysis import get_station_correlations
 
 #Paths
 user_path = Path(__file__).parent.resolve()
@@ -38,16 +34,6 @@ LINE_SUFFIXES = [
     " Line", " (O'Hare)", " (Congress)", " (Lake)", " (Englewood)", " (Express)"
 ]
 
-LINE_COLORS = {
-    "Red":    "#C60C30",
-    "Blue":   "#00A1DE",
-    "Brown":  "#62361B",
-    "Green":  "#009B3A",
-    "Orange": "#F9461C",
-    "Pink":   "#E27EA6",
-    "Purple": "#522398",
-    "Yellow": "#F9E300",
-}
 
 def load_violent_classify(df):
     df = df[df[COL_CRIME_ID].notna()]
