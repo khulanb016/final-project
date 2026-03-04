@@ -2,6 +2,7 @@ pandas
 geopandas
 altair
 pydeck
+seaborn
 matplotlib
 requests
 io
