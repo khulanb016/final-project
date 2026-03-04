@@ -1,6 +1,6 @@
 pandas
 geopandas
-altair==5.4.1
+altair==5.5.0
 streamlit==1.43.0
 pydeck
 seaborn
