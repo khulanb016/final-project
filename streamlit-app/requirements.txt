@@ -5,4 +5,5 @@ pydeck
 seaborn
 matplotlib
 requests
+streamlit
 io
