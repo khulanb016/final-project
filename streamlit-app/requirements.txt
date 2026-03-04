@@ -2,7 +2,7 @@ pandas
 geopandas
 altair==5.5.0
 streamlit==1.43.0
-pydeck
+pydeck==0.8.5
 seaborn
 matplotlib
 requests
