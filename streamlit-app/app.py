@@ -103,12 +103,63 @@ def load_derived():
         COL_MONTH:    "month",
     }, inplace=True)
 
+<<<<<<< HEAD
     # Crime by type (restore full readable column name)
     crime_types = (
         gdf[gdf[COL_CRIME_ID].notna()]
         .rename(columns={COL_PRIMARY_TYPE: "Primary Type"})
         .assign(crime_count=1)
         [["Primary Type", "crime_count"]]
+=======
+    monthly = monthly.groupby("stationname_mapped").agg(crime_count=("crime_count", "sum"), rides=("rides", "sum")).reset_index()
+
+    return monthly
+
+final_data = aggregator(crime_type="Violent",start_yr=2025)
+
+def make_chart(final_data):
+    Chart = alt.Chart(final_data).mark_point(filled=True).transform_calculate(
+        crime_per_100000 = "datum.crime_count/(datum.rides/100000)"
+    ).encode(
+        alt.X("crime_per_100000:Q", title="Crime incidents per 100,000 riders"),
+        alt.Y("rides:Q", title="Total Rides"),
+        tooltip=["stationname_mapped:N", 
+                alt.Tooltip("crime_per_100000:Q", format=".0f"),
+                "rides:Q"]
+        )
+    return Chart
+
+
+
+# --- STREAMLIT USER INTERFACE ---
+
+st.set_page_config(page_title="CTA Crime & Ridership Dashboard", layout="wide")
+
+st.title("🚇 CTA Station Analysis: Crime vs. Ridership")
+
+# Create the Tabs first
+tab_analysis, tab_map = st.tabs(["📊 Statistical Analysis", "🗺️ Geographic Map"])
+
+# 1. Global Sidebar Elements (Common to both tabs)
+st.sidebar.header("Scatterplot Filters")
+year_range = st.sidebar.slider(
+    "Select Year Range",
+    min_value=2022,
+    max_value=2025,
+    value=(2022, 2025)
+)
+start_yr, end_yr = year_range
+
+# 2. Tab-Specific Sidebar & Content
+with tab_analysis:
+    # Sidebar elements for Analysis
+    valid_crimes = sorted(derived_crime[COL_PRIMARY_TYPE].dropna().unique().tolist())
+    crime_options = ["All", "Violent", "Non-Violent"] + [c.title() for c in valid_crimes]
+    selected_crime = st.sidebar.selectbox(
+        "Select Crime Category/Type", 
+        options=crime_options, 
+        key="analysis_crime_sel"
+>>>>>>> 3f571c3 (title-cases labels update)
     )
 
     # Station map data

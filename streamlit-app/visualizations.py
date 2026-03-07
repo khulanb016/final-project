@@ -2,6 +2,7 @@ import altair as alt
 import pandas as pd
 import pydeck as pdk
 
+<<<<<<< HEAD
 # Pydeck map of all CTA stations colored by line.
 def map_deck(stations, line_colors):
     def hex_to_rgb(hex_color):         
@@ -29,6 +30,28 @@ def map_deck(stations, line_colors):
     )
 
 # Top 10 stations by total nearby crime
+=======
+#Paths
+user_path = Path(__file__).parent.resolve()
+raw_data_path = user_path.parent/ "data" / "raw-data"
+derived_data_path = user_path.parent/ "data" / "derived-data"
+
+# Shapefile column names 
+COL_STATION      = "stationnam"  
+COL_LONGNAME     = "LONGNAME_x"  
+COL_LINES        = "LINES_x"     
+COL_YEAR         = "Year_x"      
+COL_MONTH        = "Month"
+COL_RIDES        = "rides"
+COL_CRIME_ID     = "ID"
+COL_PRIMARY_TYPE = "Primary Ty"  
+
+# --- Example Usage ---
+# line_colors = {"Red": "#c60c30", "Blue": "#00a1de", "Brown": "#62361b", ...}
+# create_cta_browser_map(your_stations_df, "CTA_RailLines.shp", line_colors)
+
+# Top 10 stations by crime rate
+>>>>>>> 3f571c3 (title-cases labels update)
 def top_stations_fig(df):
     top = (
         df.groupby("stationname_mapped")["crime_count"]
@@ -38,6 +61,7 @@ def top_stations_fig(df):
         .reset_index()
     )
 
+<<<<<<< HEAD
     return (
         alt.Chart(top)
         .mark_bar(color="#C60C30")
@@ -51,6 +75,37 @@ def top_stations_fig(df):
             height=320,
         )
     )
+=======
+    df_counts = df.groupby([COL_STATION, 'crime_category']).size().reset_index(name='crime_count')
+
+    # 2. Identify the Top 10 Stations based on total volume
+    top_10_list = df_counts.groupby(COL_STATION)['crime_count'].sum().nlargest(10).index
+    df_final = df_counts[df_counts[COL_STATION].isin(top_10_list)]
+
+    return(alt.Chart(df_final).mark_bar().encode(
+        y=alt.Y('stationnam:N', 
+                title='Top 10 highest crime stations', 
+                sort='-x'), # Sorts highest volume to lowest
+        x=alt.X('crime_count:Q', 
+                title='Number of incidents'),
+        color=alt.Color('crime_category:N', 
+                        title='Crime type', 
+                        scale=alt.Scale(scheme='category10'),
+                        legend=alt.Legend(
+            labelExpr=
+            "datum.label == 'VIOLENT' ? 'Violent' : "
+            "datum.label == 'OTHER' ? 'Other' : "
+            "datum.label == 'PUBLIC_ORDER' ? 'Public order' : "
+            "datum.label == 'PROPERTY' ? 'Property and Theft' : "
+            "datum.label == 'DRUG_VICE' ? 'Drugs and Vices' : datum.label"
+            )
+    )).properties(
+        width=600,
+        height=400,
+        title='Top 10 Stations by number of crimes'
+    ))
+        
+>>>>>>> 3f571c3 (title-cases labels update)
 
 # Top 10 crime types near CTA stations — companion to top_stations_fig.
 def crime_type_fig(df):
@@ -61,12 +116,17 @@ def crime_type_fig(df):
         .head(10)
         .reset_index()
     )
+    top["Crime Type"] = top["Primary Ty"].str.title()
     return (
         alt.Chart(top)
         .mark_bar(color="#522398")
         .encode(
             alt.X("crime_count:Q", title="Total Count"),
+<<<<<<< HEAD
             alt.Y("Primary Type:N", title="Crime Type", sort="-x"),
+=======
+            alt.Y("Crime Type:N", title="Crime Type", sort="-x"),
+>>>>>>> 3f571c3 (title-cases labels update)
         )
         .properties(
             title="Top 10 Crime Types Near CTA Stations",
@@ -75,7 +135,10 @@ def crime_type_fig(df):
         )
     )
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3f571c3 (title-cases labels update)
 # Scatter of total crime vs total ridership per station, colored by line.
 def correlation_scatter_fig(df, line_colors):
     agg = (
