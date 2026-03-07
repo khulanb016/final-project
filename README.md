@@ -1,8 +1,7 @@
 # CTA Crime Analysis
 
 **Live dashboard:**
-
-An interactive Streamlit dashboard exploring the relationship between crime near Chicago CTA L stations and ridership patterns from 2022 to 2026.
+The interactive Streamlit dashboard: [here](https://cpqbkxxgjuxwabwamt2kjq.streamlit.app)
 
 ## Project Overview
 This project analyzes how crime exposure near Chicago CTA L stations relates to ridership patterns over time 2022-onwards. Using station-level ridership data, geocoded crime incidents, and spatial joins, we produce static visualizations to inform how the City of Chicago and CTA might better allocate transit security resources to improve transit utilization.
