@@ -106,14 +106,9 @@ def top_stations_fig(df):
         height=400,
         title='Top 10 Stations by number of crimes'
     ))
-        
-<<<<<<< HEAD
-=======
-
 a = top_stations_fig(derived_crime)
 
 a
->>>>>>> feature/streamlit-app
 
 # Top 10 crime types near CTA stations — companion to top_stations_fig.
 def crime_type_fig(df):
@@ -130,11 +125,9 @@ def crime_type_fig(df):
         .mark_bar(color="#522398")
         .encode(
             alt.X("crime_count:Q", title="Total Count"),
-<<<<<<< HEAD
             alt.Y("Crime Type:N", title="Crime Type", sort="-x"),
-=======
+            alt.Y("Crime Type:N", title="Crime Type", sort="-x"),
             alt.Y("Primary Ty:N", title="Crime Type", sort="-x"),
->>>>>>> feature/streamlit-app
         )
         .properties(
             title="Top 10 Crime Types Near CTA Stations",
@@ -143,7 +136,6 @@ def crime_type_fig(df):
         )
     )
 
-<<<<<<< HEAD
 # Scatter of total crime vs total ridership per station, colored by line.
 def correlation_scatter_fig(df, line_colors):
     agg = (
@@ -221,9 +213,7 @@ def dual_axis_trend_fig(df):
         .resolve_scale(y="independent")
         .properties(title="Crime vs. Ridership Over Time", width=700, height=320)
     )
-=======
 t = crime_type_fig(derived_crime)
 
 t
->>>>>>> feature/streamlit-app
 
