@@ -10,5 +10,3 @@ dependencies:
   - altair
   - pydeck
   - streamlit
-  - seaborn
-  - matplotlib

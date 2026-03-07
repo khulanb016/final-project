@@ -7,6 +7,8 @@ An interactive Streamlit dashboard exploring the relationship between crime near
 ## Project Overview
 This project analyzes how crime exposure near Chicago CTA L stations relates to ridership patterns over time 2022-onwards. Using station-level ridership data, geocoded crime incidents, and spatial joins, we produce static visualizations to inform how the City of Chicago and CTA might better allocate transit security resources to improve transit utilization.
 
+The external data folder for final project is [here](https://www.dropbox.com/scl/fo/sq360chzws1wlj3o2qyop/AATdS7xIi-0s0bwWrSTLXgI?rlkey=xgfa2m0xq61bxsp7ogfxhpiu0&st=jy69syqm&dl=0)
+
 ## Data Sources
 
 | Dataset | Description | Source |
@@ -16,8 +18,8 @@ This project analyzes how crime exposure near Chicago CTA L stations relates to 
 | `CTA_RailStations/` | Station locations (shapefile) | City of Chicago |
 | `CTA_RailLines/` | Rail line geometries (shapefile) | City of Chicago |
 
-> The crime CSV is large and is excluded from this repo via `.gitignore`.
-> The external data folder for final project is [here](https://www.dropbox.com/scl/fo/sq360chzws1wlj3o2qyop/AATdS7xIi-0s0bwWrSTLXgI?rlkey=xgfa2m0xq61bxsp7ogfxhpiu0&st=jy69syqm&dl=0) and place it in `data/raw-data/`.
+> The crime CSV is large (~1M+ rows) and is excluded from this repo via `.gitignore`.
+> Download it from the [project Dropbox](https://www.dropbox.com/scl/fo/sq360chzws1wlj3o2qyop/AATdS7xIi-0s0bwWrSTLXgI?rlkey=xgfa2m0xq61bxsp7ogfxhpiu0&st=jy69syqm&dl=0) and place it in `data/raw-data/`.
 
 ---
 
@@ -71,3 +73,12 @@ This performs a spatial join: for each station, it counts crime incidents within
 ```bash
 streamlit run streamlit-app/app.py
 ```
+
+**5. (Optional) Knit the writeup:**
+
+```bash
+quarto render final_project.qmd --to html
+quarto render final_project.qmd --to pdf
+```
+
+---
