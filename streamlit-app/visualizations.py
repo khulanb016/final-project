@@ -24,6 +24,27 @@ COL_PRIMARY_TYPE = "Primary Ty"
 # line_colors = {"Red": "#c60c30", "Blue": "#00a1de", "Brown": "#62361b", ...}
 # create_cta_browser_map(your_stations_df, "CTA_RailLines.shp", line_colors)
 
+#Load Data
+derived_crime = gpd.read_file(derived_data_path / "derived_crime.shp")
+derived_station = gpd.read_file(derived_data_path / "derived_stations.shp")
+gdf_lines = gpd.read_file(raw_data_path / "CTA_RailLines/CTA_RailLines.shp")
+
+derived_crime
+
+# Shapefile column names 
+COL_STATION      = "stationnam"  
+COL_LONGNAME     = "LONGNAME_x"  
+COL_LINES        = "LINES_x"     
+COL_YEAR         = "Year_x"      
+COL_MONTH        = "Month"
+COL_RIDES        = "rides"
+COL_CRIME_ID     = "ID"
+COL_PRIMARY_TYPE = "Primary Ty"  
+
+# --- Example Usage ---
+# line_colors = {"Red": "#c60c30", "Blue": "#00a1de", "Brown": "#62361b", ...}
+# create_cta_browser_map(your_stations_df, "CTA_RailLines.shp", line_colors)
+
 # Top 10 stations by crime rate
 def top_stations_fig(df):
     category_map = {
@@ -86,6 +107,13 @@ def top_stations_fig(df):
         title='Top 10 Stations by number of crimes'
     ))
         
+<<<<<<< HEAD
+=======
+
+a = top_stations_fig(derived_crime)
+
+a
+>>>>>>> feature/streamlit-app
 
 # Top 10 crime types near CTA stations — companion to top_stations_fig.
 def crime_type_fig(df):
@@ -102,7 +130,11 @@ def crime_type_fig(df):
         .mark_bar(color="#522398")
         .encode(
             alt.X("crime_count:Q", title="Total Count"),
+<<<<<<< HEAD
             alt.Y("Crime Type:N", title="Crime Type", sort="-x"),
+=======
+            alt.Y("Primary Ty:N", title="Crime Type", sort="-x"),
+>>>>>>> feature/streamlit-app
         )
         .properties(
             title="Top 10 Crime Types Near CTA Stations",
@@ -111,6 +143,7 @@ def crime_type_fig(df):
         )
     )
 
+<<<<<<< HEAD
 # Scatter of total crime vs total ridership per station, colored by line.
 def correlation_scatter_fig(df, line_colors):
     agg = (
@@ -188,4 +221,9 @@ def dual_axis_trend_fig(df):
         .resolve_scale(y="independent")
         .properties(title="Crime vs. Ridership Over Time", width=700, height=320)
     )
+=======
+t = crime_type_fig(derived_crime)
+
+t
+>>>>>>> feature/streamlit-app
 
