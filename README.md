@@ -1,12 +1,10 @@
-# CTA Crime Analysis
+# CTA Crime Analysis 2022-2025
 
 **Live dashboard:**
 The interactive Streamlit dashboard: [here](https://cpqbkxxgjuxwabwamt2kjq.streamlit.app)
 
 ## Project Overview
-This project analyzes how crime exposure near Chicago CTA L stations relates to ridership patterns over time 2022-onwards. Using station-level ridership data, geocoded crime incidents, and spatial joins, we produce static visualizations to inform how the City of Chicago and CTA might better allocate transit security resources to improve transit utilization.
-
-The external data folder for final project is [here](https://www.dropbox.com/scl/fo/sq360chzws1wlj3o2qyop/AATdS7xIi-0s0bwWrSTLXgI?rlkey=xgfa2m0xq61bxsp7ogfxhpiu0&st=jy69syqm&dl=0)
+This project analyzes how crime exposure near Chicago CTA L stations relates to ridership patterns over time 2022-2025. Using station-level ridership data, geocoded crime incidents, and spatial joins, we produce static visualizations to inform how the City of Chicago and CTA might better allocate transit security resources to improve transit utilization.
 
 ## Data Sources
 
@@ -25,7 +23,7 @@ The external data folder for final project is [here](https://www.dropbox.com/scl
 ## Project Structure
 
 ```
-Final Project 101/
+Final-Project/
 ├── streamlit-app/
 │   ├── preprocessing.py     # Loads data, spatially joins crimes to stations, outputs derived CSVs
 │   ├── analysis.py          # Pearson correlation functions (overall + per-station)
@@ -72,12 +70,3 @@ This performs a spatial join: for each station, it counts crime incidents within
 ```bash
 streamlit run streamlit-app/app.py
 ```
-
-**5. (Optional) Knit the writeup:**
-
-```bash
-quarto render final_project.qmd --to html
-quarto render final_project.qmd --to pdf
-```
-
----
