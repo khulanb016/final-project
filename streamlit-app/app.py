@@ -12,7 +12,6 @@ raw_data_path = user_path / "data" / "raw-data"
 derived_data_path = user_path / "data" / "derived-data"
 
 #Load Data
-#Load Data
 import requests, io
 
 @st.cache_resource
