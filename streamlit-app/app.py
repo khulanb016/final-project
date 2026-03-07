@@ -155,7 +155,7 @@ start_yr, end_yr = year_range
 with tab_analysis:
     # Sidebar elements for Analysis
     valid_crimes = sorted(derived_crime[COL_PRIMARY_TYPE].dropna().unique().tolist())
-    crime_options = ["All", "Violent", "Non-Violent"] + valid_crimes
+    crime_options = ["All", "Violent", "Non-Violent"] + [c.title() for c in valid_crimes]
     selected_crime = st.sidebar.selectbox(
         "Select Crime Category/Type", 
         options=crime_options, 

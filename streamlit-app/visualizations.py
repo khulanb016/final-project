@@ -7,15 +7,8 @@ import webbrowser
 
 #Paths
 user_path = Path(__file__).parent.resolve()
-raw_data_path = user_path.parent/ "data" / "raw-data" 
+raw_data_path = user_path.parent/ "data" / "raw-data"
 derived_data_path = user_path.parent/ "data" / "derived-data"
-
-#Load Data
-derived_crime = gpd.read_file(derived_data_path / "derived_crime.shp")
-derived_station = gpd.read_file(derived_data_path / "derived_stations.shp")
-gdf_lines = gpd.read_file(raw_data_path / "CTA_RailLines/CTA_RailLines.shp")
-
-derived_crime
 
 # Shapefile column names 
 COL_STATION      = "stationnam"  
@@ -94,10 +87,6 @@ def top_stations_fig(df):
     ))
         
 
-a = top_stations_fig(derived_crime)
-
-a
-
 # Top 10 crime types near CTA stations — companion to top_stations_fig.
 def crime_type_fig(df):
     top = (
@@ -107,12 +96,13 @@ def crime_type_fig(df):
         .head(10)
         .reset_index(name = "crime_count")
     )
+    top["Crime Type"] = top["Primary Ty"].str.title()
     return (
         alt.Chart(top)
         .mark_bar(color="#522398")
         .encode(
             alt.X("crime_count:Q", title="Total Count"),
-            alt.Y("Primary Ty:N", title="Crime Type", sort="-x"),
+            alt.Y("Crime Type:N", title="Crime Type", sort="-x"),
         )
         .properties(
             title="Top 10 Crime Types Near CTA Stations",
@@ -120,10 +110,6 @@ def crime_type_fig(df):
             height=320,
         )
     )
-
-t = crime_type_fig(derived_crime)
-
-t
 
 # Scatter of total crime vs total ridership per station, colored by line.
 def correlation_scatter_fig(df, line_colors):
