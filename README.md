@@ -1,7 +1,7 @@
 # CTA Crime Analysis 2022-2025
 
-**Live dashboard:**
-The interactive Streamlit dashboard: [here](https://cpqbkxxgjuxwabwamt2kjq.streamlit.app)
+**Streamlit Dashboard:**
+The streamlit dashboard can be found at the following link: https://cpqbkxxgjuxwabwamt2kjq.streamlit.app/ 
 
 ## Project Overview
 This project analyzes how crime exposure near Chicago CTA L stations relates to ridership patterns over time 2022-2025. Using station-level ridership data, geocoded crime incidents, and spatial joins, we produce static visualizations to inform how the City of Chicago and CTA might better allocate transit security resources to improve transit utilization.
@@ -43,7 +43,7 @@ final-project/
 │   ├── app.py               # Main Streamlit dashboard
 ├── .gitignore 
 ├── README.md
-├── environment.yml 
+├── requirements.yml 
 ├── final-project.pdf        # Knitted PDF 
 ├── final-project.html       # Knitted HTML
 └── final-project.qmd        # Written writeup 
@@ -54,7 +54,7 @@ final-project/
 **1. Clone the repo and set up the conda environment:**
 
 ```bash
-conda env create -f environment.yml
+conda env create -f requirements.yml
 conda activate ctacrime
 ```
 
