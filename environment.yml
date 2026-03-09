@@ -12,3 +12,4 @@ dependencies:
   - streamlit
   - seaborn
   - matplotlib
+  - vl-convert-python
