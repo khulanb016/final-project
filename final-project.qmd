@@ -133,6 +133,9 @@ gdf_C_by_S
 items_to_remove_3 = ['CTA "L" TRAIN', 'CTA TRAIN','CTA PLATFORM','CTA STATION', 'CTA "L" PLATFORM','CTA SUBWAY STATION']
 other_location = [item for item in location_types if item not in items_to_remove_3]
 gdf_crime_other = gdf_crime[gdf_crime["Location Description"].isin(other_location)]
+gdf_crime_other = gdf_crime_other[
+    (gdf_crime_other.geometry.x > 1) | (gdf_crime_other.geometry.y > 1)
+]
 gdf_OC_by_S = gpd.sjoin_nearest(
     left_df= gdf_crime_other, 
     right_df= gdf_station, 
