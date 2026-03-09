@@ -23,12 +23,7 @@ This project analyzes how crime exposure near Chicago CTA L stations relates to 
 ## Project Structure
 
 ```
-Final-Project/
-├── streamlit-app/
-│   ├── preprocessing.py     # Loads data, spatially joins crimes to stations, outputs derived CSVs
-│   ├── analysis.py          # Pearson correlation functions (overall + per-station)
-│   ├── visualizations.py    # Altair chart and pydeck map functions (trends, crime bars, scatter, heatmap)
-│   ├── app.py               # Main Streamlit dashboard
+final-project/
 ├── data/
 │   ├── raw-data/
 │   │   ├── Crimes_-_2001_to_Present_20260218.csv   # ← download separately (see above)
@@ -41,9 +36,17 @@ Final-Project/
 │       └── derived_crime.prj                        
 │       ├── derived_crime.shp                        
 │       └── derived_crime.shx  
-├── final_project.qmd        # Written writeup (source)
-├── environment.yml
-└── README.md
+├── streamlit-app/
+│   ├── preprocessing.py     # Loads data, spatially joins crimes to stations, outputs derived CSVs
+│   ├── analysis.py          # Pearson correlation functions (overall + per-station)
+│   ├── visualizations.py    # Altair chart and pydeck map functions (trends, crime bars, scatter, heatmap)
+│   ├── app.py               # Main Streamlit dashboard
+├── .gitignore 
+├── README.md
+├── environment.yml 
+├── final-project.pdf        # Knitted PDF 
+├── final-project.html       # Knitted HTML
+└── final-project.qmd        # Written writeup 
 ```
 
 ## Setup
