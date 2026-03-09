@@ -18,6 +18,10 @@ This project analyzes how crime exposure near Chicago CTA L stations relates to 
 > The crime CSV is large (~1M+ rows) and is excluded from this repo via `.gitignore`.
 > Download it from the [project Dropbox](https://www.dropbox.com/scl/fo/sq360chzws1wlj3o2qyop/AATdS7xIi-0s0bwWrSTLXgI?rlkey=xgfa2m0xq61bxsp7ogfxhpiu0&st=jy69syqm&dl=0) and place it in `data/raw-data/`.
 
+## Streamlit Dashboard
+The streamlit dashboard can be found at the following link:
+https://cpqbkxxgjuxwabwamt2kjq.streamlit.app/
+
 ---
 
 ## Project Structure

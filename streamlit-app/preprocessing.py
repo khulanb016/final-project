@@ -3,6 +3,7 @@ import geopandas as gpd
 import pandas as pd
 from pathlib import Path
 from shapely import Point
+import altair as alt
 
 user_path = Path(__file__).parent.resolve()
 raw_data_path = user_path.parent/ "data" / "raw-data" 
@@ -114,6 +115,7 @@ df_ridership["date"]
 df_ridership['date'] = pd.to_datetime(df_ridership['date'])
 df_ridership["Year"] = df_ridership["date"].dt.year
 df_ridership["Month"] = df_ridership["date"].dt.month
+gdf_crime_combo['Time'] = pd.to_datetime(gdf_crime_combo['Date']).dt.time
 gdf_crime_combo["Date"] = pd.to_datetime(gdf_crime_combo["Date"]).dt.date
 gdf_crime_combo["Date"] = pd.to_datetime(gdf_crime_combo["Date"])
 gdf_crime_combo = gdf_crime_combo[gdf_crime_combo['Date'] <= (df_ridership['date'].max())] #ridership data ends before crime data
@@ -177,11 +179,5 @@ gdf_crime_derived = gpd.GeoDataFrame(gdf_crime_derived, geometry='geometry')
 gdf_crime_derived.set_crs("EPSG:3435",inplace=True)
 gdf_crime_derived.to_file(derived_data_path / "derived_crime.shp",driver = 'ESRI Shapefile')
 
-
-
-
-
-
-
-
-
+#Save modified station data
+gdf_station.to_file(derived_data_path / "derived_stations.shp",driver = 'ESRI Shapefile')

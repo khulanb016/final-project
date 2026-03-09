@@ -1,26 +1,32 @@
 ---
 title: "CTA L Ridership vs. Crime: A Station-Level Analysis 2022-2025"
-author: "Khulan B., Kunsh K.| GitHub: khulanb01, Kunsh1312 | Lecture: [Wednesday/10:30 AM]"
+author: "Khulan B., Kunsh K.| GitHub: khulanb01, Kunsh1312 | Lecture: [M/W10:30 AM],[T/T/11:00 AM]"
 date: "March 09, 2026"
 format:
   html:
     self-contained: true
   pdf:
     documentclass: article
-    geometry: margin=2.54cm
+    geometry: margin=1.9cm
     fig-format: png
-    fontsize: 10pt
+    fontsize: 9pt
+execute:
+  echo: false
+  warning: false
 ---
 
 ```{python}
 #| echo: false
 #| warning: false
-#|
+
+#Importing packages
+
 import geopandas as gpd
 import pandas as pd
 import altair as alt
 from pathlib import Path
 import warnings
+from shapely import Point
 warnings.filterwarnings('ignore')
 
 alt.renderers.enable("png")
@@ -30,6 +36,194 @@ import tempfile
 import vl_convert as vlc
 from IPython.display import Image, display
 
+```
+
+```{python}
+#| echo: false
+#| warning: false
+
+#Preprocessing code
+
+raw_data_path = Path("data") / "raw-data" 
+derived_data_path = Path("data") / "derived-data"
+
+#Loading all datasets
+df_crime = pd.read_csv(raw_data_path / "Crimes_-_2001_to_Present_20260218.csv")
+df_ridership = pd.read_csv(raw_data_path / "CTA_Ridership_L_Station_Entries_Daily_Totals_2022-2026.csv")
+gdf_station = gpd.read_file(raw_data_path / "CTA_RailStations/CTA_RailStations.shp")
+gdf_lines = gpd.read_file(raw_data_path / "CTA_RailLines/CTA_RailLines.shp")
+
+#Adding missing Dame-Lake station which was opened in 2024 while data is from 2023 
+gdf_station.set_crs("EPSG:3435",inplace=True)
+gdf_station.to_crs("EPSG:4326",inplace=True)
+new_row = gpd.GeoDataFrame({
+    'STATION_ID': [1710],
+    'LONGNAME': ['Damen-Lake'],
+    'LINES': ['Green Line'],
+    'ADDRESS': ['N Damen Ave & W Lake St'],
+    'ADA': [1],
+    'PKNRD': [0]
+}, geometry=[Point(-87.676800, 41.885011)], crs="EPSG:4326")
+gdf_station = pd.concat([gdf_station, new_row], ignore_index=True)
+gdf_station.to_crs("EPSG:3435",inplace=True)
+
+#Drop Roosevent/Wabash as ridership data combines them under one station called roosevelt 
+#with one being elevated and the other being a subway but both are at the same location
+gdf_station = gdf_station[gdf_station["LONGNAME"]!="Roosevelt/Wabash"]
+
+#Converting crime to gdf with lattitude longitude crs then setting to same crs as other gdfs
+gdf_crime = gpd.GeoDataFrame(
+    df_crime,
+    geometry = gpd.points_from_xy(df_crime.Longitude, df_crime.Latitude),
+    crs = "EPSG:4326"
+) 
+gdf_crime.to_crs("EPSG:3435",inplace=True)
+
+#subsetting all CTA crimes to only include those happening on a train
+location_types = gdf_crime["Location Description"].unique().tolist()
+CTA_types = [item for item in location_types if isinstance(item, str) and "CTA" in item]
+items_to_remove = ['CTA PARKING LOT / GARAGE / OTHER PROPERTY','CTA TRACKS - RIGHT OF WAY','CTA PROPERTY','CTA BUS STOP','CTA BUS','CTA PLATFORM',
+ 'CTA STATION', 'CTA "L" PLATFORM','CTA SUBWAY STATION']
+CTA_types = [item for item in CTA_types if item not in items_to_remove]
+gdf_crime_CTA_lines = gdf_crime[gdf_crime["Location Description"].isin(CTA_types)]
+gdf_crime_CTA_lines = gdf_crime_CTA_lines[
+    (gdf_crime_CTA_lines.geometry.x > 1) | (gdf_crime_CTA_lines.geometry.y > 1)
+]
+
+#creating Line crimes gdf to filter crimes that dont happen within certain distance of a train line to ensure reasonability
+gdf_C_by_L = gpd.sjoin_nearest(
+    left_df= gdf_crime_CTA_lines, 
+    right_df= gdf_lines, 
+    how="inner",
+    max_distance=1500, #approx 450 metres, 457.2
+)
+gdf_C_by_L.drop_duplicates(subset=["ID"],keep="first")
+gdf_C_by_L.drop(columns=['LINES', 'DESCRIPTIO', 'TYPE', 'LEGEND', 'SHAPE_LEN','index_right'],inplace=True)
+
+#Linking crimes close to a line to their nearest station
+gdf_C_by_L = gpd.sjoin_nearest(
+    left_df= gdf_C_by_L, 
+    right_df= gdf_station, 
+    how="inner", #No max distance as these are already checked for reasonability due to being close to a line
+    distance_col="distance_to_station"
+)
+gdf_C_by_L.drop_duplicates(subset=["ID"],keep="first",inplace=True)
+
+#Now subsetting to include those crimes that happen at a train station
+CTA_types = [item for item in location_types if isinstance(item, str) and "CTA" in item]
+items_to_remove_2 = ['CTA PARKING LOT / GARAGE / OTHER PROPERTY','CTA TRACKS - RIGHT OF WAY','CTA PROPERTY','CTA BUS STOP','CTA BUS','CTA "L" TRAIN', 'CTA TRAIN']
+CTA_types = [item for item in CTA_types if item not in items_to_remove_2]
+gdf_crime_CTA_station = gdf_crime[gdf_crime["Location Description"].isin(CTA_types)]
+gdf_crime_CTA_station = gdf_crime_CTA_station[
+    (gdf_crime_CTA_station.geometry.x > 1) | (gdf_crime_CTA_station.geometry.y > 1)
+]
+
+#Link crimes to nearest station
+gdf_C_by_S = gpd.sjoin_nearest(
+    left_df= gdf_crime_CTA_station, 
+    right_df= gdf_station, 
+    how="inner",
+    max_distance=1500, #approx 450 metres, 457.2
+    distance_col="distance_to_station"
+)
+gdf_C_by_S.drop_duplicates(subset=["ID"],keep="first",inplace=True)
+gdf_C_by_S
+
+#Link any non CTA station/line crimes happening within a smaller radius of the station to the nearest station.
+items_to_remove_3 = ['CTA "L" TRAIN', 'CTA TRAIN','CTA PLATFORM','CTA STATION', 'CTA "L" PLATFORM','CTA SUBWAY STATION']
+other_location = [item for item in location_types if item not in items_to_remove_3]
+gdf_crime_other = gdf_crime[gdf_crime["Location Description"].isin(other_location)]
+gdf_OC_by_S = gpd.sjoin_nearest(
+    left_df= gdf_crime_other, 
+    right_df= gdf_station, 
+    how="inner",
+    max_distance=700, #approx 200 metres, 213.36
+    distance_col="distance_to_station"
+)
+gdf_OC_by_S.drop_duplicates(subset=["ID"],keep="first",inplace=True)
+gdf_OC_by_S
+
+#Concatenating all 3 datasets to get relevant crime dataset with associated station data and save to derived data
+gdf_crime_combo = pd.concat([gdf_C_by_L,gdf_C_by_S,gdf_OC_by_S])
+gdf_crime_combo.drop_duplicates(subset=["ID"],keep="first",inplace=True)
+
+#preparing ridership data and crime to be merged 
+df_ridership["rides"] = df_ridership["rides"].str.replace(',', '').astype(int)
+df_ridership["date"]
+df_ridership['date'] = pd.to_datetime(df_ridership['date'])
+df_ridership["Year"] = df_ridership["date"].dt.year
+df_ridership["Month"] = df_ridership["date"].dt.month
+gdf_crime_combo['Time'] = pd.to_datetime(gdf_crime_combo['Date']).dt.time
+gdf_crime_combo["Date"] = pd.to_datetime(gdf_crime_combo["Date"]).dt.date
+gdf_crime_combo["Date"] = pd.to_datetime(gdf_crime_combo["Date"])
+gdf_crime_combo = gdf_crime_combo[gdf_crime_combo['Date'] <= (df_ridership['date'].max())] #ridership data ends before crime data
+damen_date = df_ridership[df_ridership['stationname']=='Damen-Lake']['date'].min()
+gdf_crime_combo = gdf_crime_combo[(gdf_crime_combo["LONGNAME"]!="Damen-Lake") | (gdf_crime_combo["Date"]>=damen_date)]
+
+df_ridership['Year'].value_counts()
+
+
+#renaming stations whose names dont match between datasets
+station_mapping = {
+    'Addison-Ravenswood': 'Addison-Brown',
+    'Ashland-Midway': 'Ashland-Orange',
+    'Austin-Congress': 'Austin-Forest Park',
+    'California-Douglas': 'California-Cermak',
+    'Cicero-Congress': 'Cicero-Forest Park',
+    'Cicero-Douglas': 'Cicero-Cermak',
+    'Clinton-Congress': 'Clinton-Forest Park',
+    'Conservatory-Central Park': 'Conservatory',
+    'Cottage Grove': 'East 63rd-Cottage Grove',
+    'Damen': 'Damen-Cermak',
+    'Damen-Ravenswood': 'Damen-Brown',
+    'Halsted-Midway': 'Halsted-Orange',
+    'Harlem-Congress': 'Harlem-Forest Park',
+    'Illinois Medical District': 'Medical Center',
+    'Irving Park-Ravenswood': 'Irving Park-Brown',
+    'Kedzie-Douglas': 'Kedzie-Cermak',
+    'Kedzie-Homan': 'Kedzie-Homan-Forest Park',
+    'Kedzie-Ravenswood': 'Kedzie-Brown',
+    'Montrose-Ravenswood': 'Montrose-Brown',
+    'Morgan': 'Morgan-Lake',
+    'Oak Park-Congress': 'Oak Park-Forest Park',
+    'Pulaski-Congress': 'Pulaski-Forest Park',
+    'Pulaski-Douglas': 'Pulaski-Cermak',
+    'Pulaski-Midway': 'Pulaski-Orange',
+    'Roosevelt/State': 'Roosevelt',
+    'Western-Congress': 'Western-Forest Park',
+    'Western-Douglas': 'Western-Cermak',
+    'Western-Midway': 'Western-Orange',
+    'Western-Ravenswood': 'Western-Brown'
+}
+
+gdf_crime_combo['LONGNAME'] = gdf_crime_combo['LONGNAME'].replace(station_mapping)
+gdf_station['LONGNAME'] = gdf_station['LONGNAME'].replace(station_mapping)
+
+#Merge crime derived with ridership data. left merge to preserve ridership data for dates and stations with no crime data
+#Drop geometry from crime_combo and add it to ridership ensure every observation has a geometry
+gdf_crime_combo.drop(columns=["geometry"],inplace=True)
+df_ridership_geo = pd.merge(left=df_ridership,right=gdf_station,how="outer",left_on=["stationname"],right_on=["LONGNAME"])
+gdf_crime_derived = pd.merge(left=df_ridership_geo,right=gdf_crime_combo,how="outer",left_on=["stationname","date"],right_on=["LONGNAME","Date"],indicator=True)
+
+#Drop those stations which have no crime data. Maybe due to falling outside of CPD's remit
+a = gdf_crime_combo["LONGNAME"].unique().tolist()
+b= gdf_station['LONGNAME'].unique().tolist()
+difference_list1_not_in_list2 = list(set(b) - set(a))
+gdf_crime_derived = gdf_crime_derived[~gdf_crime_derived["stationname"].isin(difference_list1_not_in_list2)]
+gdf_crime_derived["_merge"].value_counts()
+
+#Turn derived crime into geodataframe and save
+gdf_crime_derived = gpd.GeoDataFrame(gdf_crime_derived, geometry='geometry')
+gdf_crime_derived.set_crs("EPSG:3435",inplace=True)
+gdf_crime_derived.to_file(derived_data_path / "derived_crime.shp",driver = 'ESRI Shapefile')
+
+#Save modified station data
+gdf_station.to_file(derived_data_path / "derived_stations.shp",driver = 'ESRI Shapefile')
+
+```
+```{python}
+#Code for visualisations
+
 def show(chart, scale=2):
     png_bytes = vlc.vegalite_to_png(chart.to_dict(), scale=scale)
     with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
@@ -37,27 +231,16 @@ def show(chart, scale=2):
         tmp.flush()
         display(Image(filename=tmp.name))
 
-# Load derived shapefile (output of preprocessing.py)
+# Load derived crime (output of preprocessing.py)
 gdf = gpd.read_file("data/derived-data/derived_crime.shp")
 
-# Reproduce the primary-line extraction from app.py
 LINE_SUFFIXES = [" Line", " (O'Hare)", " (Congress)", " (Lake)", " (Englewood)", " (Express)"]
-
-def extract_primary_line(line_str):
-    if pd.isna(line_str):
-        return "Unknown"
-    first = line_str.split(",")[0].strip()
-    for suffix in LINE_SUFFIXES:
-        first = first.replace(suffix, "")
-    return first.strip()
-
-gdf["primary_line"] = gdf["LINES_x"].apply(extract_primary_line)
 
 # Monthly ridership - one row per station/month (mirrors app.py load_derived)
 rides_monthly = (
     gdf.drop_duplicates(subset=["stationnam", "date"])
-    [["stationnam", "LONGNAME_x", "primary_line", "Year_x", "Month", "rides"]]
-    .groupby(["stationnam", "LONGNAME_x", "primary_line", "Year_x", "Month"])["rides"]
+    [["stationnam", "LONGNAME_x", "Year_x", "Month", "rides"]]
+    .groupby(["stationnam", "LONGNAME_x", "Year_x", "Month"])["rides"]
     .sum()
     .reset_index()
 )
@@ -94,67 +277,6 @@ COL_STATION      = "stationnam"
 COL_PRIMARY_TYPE = "Primary Ty"
 
 # Visualization functions copied directly from visualizations.py
-def top_stations_fig(df):
-    category_map = {
-        # Violent Crimes
-        'BATTERY': 'VIOLENT', 'ASSAULT': 'VIOLENT', 'HOMICIDE': 'VIOLENT',
-        'CRIMINAL SEXUAL ASSAULT': 'VIOLENT', 'SEX OFFENSE': 'VIOLENT',
-        'STALKING': 'VIOLENT', 'KIDNAPPING': 'VIOLENT',
-        'OFFENSE INVOLVING CHILDREN': 'VIOLENT', 'INTIMIDATION': 'VIOLENT',
-
-        # Property Crimes
-        'THEFT': 'PROPERTY', 'MOTOR VEHICLE THEFT': 'PROPERTY',
-        'BURGLARY': 'PROPERTY', 'ROBBERY': 'PROPERTY',
-        'CRIMINAL DAMAGE': 'PROPERTY', 'ARSON': 'PROPERTY',
-        'DECEPTIVE PRACTICE': 'PROPERTY',
-
-        # Drug & Vice
-        'NARCOTICS': 'DRUG_VICE', 'OTHER NARCOTIC VIOLATION': 'DRUG_VICE',
-        'LIQUOR LAW VIOLATION': 'DRUG_VICE', 'GAMBLING': 'DRUG_VICE',
-        'PROSTITUTION': 'DRUG_VICE',
-
-        # Public Order & Regulatory
-        'WEAPONS VIOLATION': 'PUBLIC_ORDER', 'CONCEALED CARRY LICENSE VIOLATION': 'PUBLIC_ORDER',
-        'PUBLIC_ORDER VIOLATION': 'PUBLIC_ORDER', 'INTERFERENCE WITH PUBLIC OFFICER': 'PUBLIC_ORDER',
-        'CRIMINAL TRESPASS': 'PUBLIC_ORDER', 'PUBLIC INDECENCY': 'PUBLIC_ORDER',
-        'OBSCENITY': 'PUBLIC_ORDER', 'PUBLIC PEACE VIOLATION': 'PUBLIC_ORDER',
-
-        # Other
-        'OTHER OFFENSE': 'OTHER', 'HUMAN TRAFFICKING': 'OTHER',
-        'NON-CRIMINAL': 'OTHER', None: 'OTHER'
-    }
-    # Create the new column
-    df['crime_category'] = df[COL_PRIMARY_TYPE].map(category_map)
-
-    df_counts = df.groupby([COL_STATION, 'crime_category']).size().reset_index(name='crime_count')
-
-    # 2. Identify the Top 10 Stations based on total volume
-    top_10_list = df_counts.groupby(COL_STATION)['crime_count'].sum().nlargest(10).index
-    df_final = df_counts[df_counts[COL_STATION].isin(top_10_list)]
-
-    return(alt.Chart(df_final).mark_bar().encode(
-        y=alt.Y('stationnam:N',
-                title='Top 10 highest crime stations',
-                sort='-x'), # Sorts highest volume to lowest
-        x=alt.X('crime_count:Q',
-                title='Number of incidents'),
-        color=alt.Color('crime_category:N',
-                        title='Crime type',
-                        scale=alt.Scale(scheme='category10'),
-                        legend=alt.Legend(
-            labelExpr=
-            "datum.label == 'VIOLENT' ? 'Violent' : "
-            "datum.label == 'OTHER' ? 'Other' : "
-            "datum.label == 'PUBLIC_ORDER' ? 'Public order' : "
-            "datum.label == 'PROPERTY' ? 'Property and Theft' : "
-            "datum.label == 'DRUG_VICE' ? 'Drugs and Vices' : datum.label"
-            )
-    )).properties(
-        title='Top 10 Stations by Number of Crimes (2022-2025)',
-        width=280,
-        height=170,
-    ))
-
 def crime_type_fig(df):
     top = (
         df.groupby("Primary Ty")
@@ -173,47 +295,62 @@ def crime_type_fig(df):
         )
         .properties(
             title="Top 10 Crime Types Near CTA Stations (2022-2025)",
-            width=280,
-            height=170,
+            width=250,
+            height=100,
         )
     )
 
-# Copied directly from app.py
-def make_chart(final_data):
-    Chart = alt.Chart(final_data).mark_point(filled=True).transform_calculate(
-        crime_per_100000 = "datum.crime_count/(datum.rides/100000)"
-    ).encode(
-        alt.X("crime_per_100000:Q", title="Crime incidents per 100,000 riders"),
-        alt.Y("rides:Q", title="Total Rides"),
-        tooltip=["stationname_mapped:N",
-                alt.Tooltip("crime_per_100000:Q", format=".0f"),
-                "rides:Q"]
-        )
-    return Chart
+def heatmap(df):
+    df = df.dropna(subset = "Time")
+
+    df["d_of_week"] = pd.to_datetime(df["date"]).dt.day_name()
+    df["hour"] = pd.to_datetime(df['Time'], format='%H:%M:%S').dt.hour
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+    heatmap_data = df.groupby(['d_of_week', 'hour']).size().reset_index(name='crime_count')
+
+    chart = alt.Chart(heatmap_data).mark_rect().encode(
+    x=alt.X('d_of_week:O', 
+            sort=day_order, 
+            title='Day of the Week'),
+    y=alt.Y('hour:O', 
+            title='Hour of the Day (24h)',
+            axis=alt.Axis(labelFontSize=9)),
+    color=alt.Color('crime_count:Q', 
+                    scale=alt.Scale(scheme='oranges'), 
+                    title='Number of Crimes'),
+    ).properties(
+    title='Crime Frequency by Day and Hour Near CTA Stations (2022-2025)',
+    width=300,
+    height=190
+    ).configure_axis(
+    labelFontSize=12,
+    titleFontSize=14
+    )
+
+    return chart
+
+
 ```
 
 ## Research Question
-Our primary research question is: Is there a statistically significant link between CTA L monthly ridership and nearby crime? We further investigate whether this relationship varies by CTA line, which stations show disproportionately high crime relative to ridership, and how both metrics have trended from 2022 to 2025.
+Our primary research question is: Is there a link between CTA L monthly ridership and nearby crime? We further investigate whether this relationship varies by crime type, time and which stations show disproportionately high crime relative to ridership, and how these metrics have trended from 2022 to 2025.
 
-Our hypothesis is that higher-ridership stations will exhibit more nearby crime due to increased foot traffic, but that this relationship will differ across lines and station types. This question matters because safety perception is one of the largest barriers to CTA ridership recovery, which at one point sat at barely 60% of pre-COVID levels, and station-level analysis can inform smarter, more targeted resource allocation than citywide averages.
+Our hypothesis is that higher-ridership stations will exhibit more nearby crime due to increased foot traffic, but that this need not lower ridership. This question matters because safety perception is one of the largest barriers to CTA ridership recovery, which at one point sat at barely 60% of pre-COVID levels, and station-level analysis can inform smarter, more targeted resource allocation than citywide averages.
 
 ## Data and Approach
 ### Datasets
 
 1. **CTA L Station Entries** (Chicago Data Portal): daily station-level entries for all 145 CTA L stations, 2022–2025.
-2. **Chicago Crime Incidents (2001-present)** (Chicago Data Portal): containing GPS coordinates, crime type, and date for every reported incident from the Chicago Police Department, subset to 2022–2025. This file is excluded from the repo due to its size; download it from the Dropbox link in the README and place it in `data/raw-data/`.
-3. **CTA Rail Stations Shapefiles** (`CTA_RailStations/`): point geometries for all eight CTA L lines, used to validate on-train crime locations.
-4. **CTA Rail Lines Shapefile** (`CTA_RailLines/`): line geometrics for coordinates and attributes for all 8 L Lines.
-5. All spatial operations use the Illinois State Plane East projection (EPSG:3435, units in feet).
+2. **Chicago Crime Incidents (2001-present)** (Chicago Data Portal): containing GPS coordinates, crime type, and date for every reported incident from the Chicago Police Department, subset to 2022–2025.
+3. **CTA Rail Stations Shapefiles** (`CTA_RailStations/`): point geometries for all CTA L stations, used to validate near station crime locations.
+4. **CTA Rail Lines Shapefile** (`CTA_RailLines/`): line geometries for coordinates and attributes for all 8 L Lines, used to validate on train crime locations.
 
 ### Data Preprocessing and Spatial Join
-Merging these datasets required significant cleaning, in which **twenty-nine stations** were named differently across the ridership and shapefile datasets, so we built a manual mapping dictionary to reconcile them. Secondly, **Damen-Lake**, which opened in 2024, was entirely absent from the shapefile and had to be added manually using GPS coordinates. We also dropped a **Roosevelt/Wabash duplicate** in the shapefile to prevent double-counting against a single ridership entry. On the spatial side, crime coordinates arrived in **EPSG:4326** and were reprojected to **Illinois State Plane (EPSG:3435)** for accurate distance calculations. We applied **three distance thresholds**: 450 meters for crimes with train or station-related location descriptions and 200 meters for general nearby crimes. The **shapefile's 10-character column name** limit caused field truncation that required systematic renaming throughout the pipeline. The resulting merged dataset contains one row per station per day, joining ridership totals with spatially linked crime counts.
-
-### Correlation analysis
-A Per-station Pearson correlation coefficients (r) between monthly crime count and monthly ridership are computed, with a p-value threshold of 0.05 for significance. Secondly, a system-wide correlation is also computed across all station-month rows to capture the overall trend.
+We wanted to only consider crimes that could reasonably affect safety perceptions of the L trains. As such we included all crimes being labelled thought their location description as related to the L train system with a 1500 feet (approximately 450m) sanity check. To further account for the fact that crimes may not be logged as CTA crimes and that crimes near stations could still impact safety perceptions, we also included crimes that occured within 700 feet of a station (approximately 200m). We then joined these crimes to their nearest station alongside its ridership data. Merging these datasets required significant cleaning, in which **twenty-nine stations** were named differently across the ridership and shapefile datasets, so we built a mapping dictionary to reconcile them. Secondly, **Damen-Lake**, which opened in 2024, was entirely absent from the shapefile due to it being from 2023 and had to be added manually using coordinates. We also dropped a **Roosevelt/Wabash duplicate** in the shapefile as the shapefile seperates the underground and overground station while the ridership data did not. The resulting merged dataset contains one row per crime along with the station the cime is closest to and its ridership data.
 
 ### Difficulties and Limitations
-The most time-consuming challenge was **station name reconciliation**, as the 29-station dictionary had to be hand-built. Beyond that, our analysis has several limitations: **it captures only reported crimes**, it does not control for confounders such as weather, service disruptions, or major events, and **the observed correlation does not establish causation** since both ridership and crime likely co-vary with underlying population density and foot traffic.
+The most time-consuming challenge was data cleaning. The **reconciliation between ridership and station data** was particularly difficult as both datasets at first glance due to station data having both a duplicate and missing station. As such it requred significant research and data exploration to reconcile the mismatch. Further renamings though done with AI assistance had to be carefully vetted. Beyond that, our analysis has several limitations. First, and foremost **it captures only reported crimes**, especially for crimes like pickpocketting (theft) the victim could believe that the item was lost or that the crime happened somewehere other than the L station which means that actual crime is higher. Adding on to this if there is a correlation between likelihood of crime being reported and ridership this could present a significant challenge for the validity of our findings. Further we don't account for factors such as weather, service disruptions, or major events which could have important effects. Finally our study is in no way causal **the observed correlation does not establish causation** and while it can help inform policy it is not a silver bullet.
 
 ## Static Visualizations
 ### Figure 1: Top 10 Crime Types Near CTA Stations.
@@ -222,29 +359,25 @@ The most time-consuming challenge was **station name reconciliation**, as the 29
 #| warning: false
 show(crime_type_fig(gdf))
 ```
-This horizontal bar chart shows the most frequent crime types near CTA stations. Theft dominates at ~28,000 incidents, followed by battery (~15,000) and criminal damage (~7,500). This answers our sub-question about crime composition: the ridership-crime link is driven overwhelmingly by property crime, not violent offenses, which has direct implications for the type of security interventions needed.
 
-### Figure 2: Top 10 Stations by Number of Crimes.
+### Figure 2: Crime Heatmap.
 ```{python}
 #| echo: false
 #| warning: false
-show(top_stations_fig(gdf.copy()))
+show(heatmap(gdf.copy()))
 ```
-The stacked horizontal bar chart breaks down crime counts at the highest-crime stations by category (Drugs & Vices, Other, Property & Theft, Public Order, Violent). Grand/State and Washington/Dearborn each approach 5,000 incidents, dominated by property/theft. Clark/Division and Howard show higher violent crime proportions. This directly addresses our sub-question about whether busier stations attract more crime: the highest-crime stations are indeed major downtown transfer hubs, but outlier stations like Clark/Division suggest that station characteristics, not just ridership volume but also shape crime patterns.
+
+Figure 1 shows the most frequent crime types near CTA stations. Theft dominates at ~28,000 incidents, followed by battery (~15,000) and criminal damage (~7,500). This is important in that theft being non-violent could be better addressed through cctv surveilance, plain clothes officers and urging greater awareness from riders as opposed to heavy weaponized police presence.
+
+Figure 2 helps illustrate important temporal patterns in crime. The most interesting observations are that most crime occurs at noon rather than commuter hours. Further, Friday seems like a day with a lot of reported crime perhaps due to people being more relaxed and less aware of their surrounding at the end of the workweek. While 12 at night also seems like a peak time, this likely represents a missing data issue rather than a valuable insight. Deploying security resources according to these peak times could yield better outcomes for discouraging crime.
 
 ## Streamlit App
 The interactive dashboard is deployed at: https://cpqbkxxgjuxwabwamt2kjq.streamlit.app/
 
 We built an interactive Streamlit dashboard titled **"CTA Station Analysis: Crime vs. Ridership"**.
-**The Statistical Analysis** tab plots crime incidents per 100,000 riders (X axis) against total rides (Y axis),
-letting users identify stations that are outliers, with disproportionately high crime rates relative to ridership, rather than
-stations that merely appear crime-heavy because they are busy.
+**The Statistical Analysis** tab plots crime incidents per 100,000 riders against total rides with option to filter by crime type and year. We observe a negative relationship with stations that pass a certain crime rate threshold always having low ridership . This could suggest structural issues at these stations with high crime despite lower ridership. These observations also don't vary with whether crime is violent or non violent or specific crimes suggesting that riders are somewhat agnostic in crime type when making ridership decisions so reducing specific types of crime may not help.
 **The Geographic Map** tab renders stations as circles on a pydeck map, with circle size driven by the
-user's choice of total crimes, crimes per 100k riders, or total riders, making spatial hotspots immediately visible.
-**The sidebar** is split into two sections: *Scatterplot Filters* (year range slider and crime category selector
-covering All, Violent, Non-Violent, or any specific crime type) and *Map Controls* (metric selector for circle sizing).
-The dashboard transforms our static findings into an exploratory tool that could directly support
-CTA resource allocation and security planning.
+user's choice of total crimes, crimes per 100k riders, or total riders, making spatial hotspots immediately visible. Here we clearly see transit hubs and downtown tned to have both the higest ridership and crime incidents. However for crime rate these tend to be on the outskirts both south like King Drive and north like Berwyn. 
 
 ## Policy Implications
-Our analysis finds that the ridership & crime relationship is statistically significant system-wide but varies considerably by station. Theft dominates, followed by battery and assault, and the highest-crime stations tend to be downtown transfer hubs that also rank highest in ridership. Both series peak in summer and dip in winter, suggesting shared external drivers. Rather than distributing security resources evenly, CTA should concentrate them at high-crime, high-ridership stations. The dominance of theft calls for targeted interventions such as surveillance and plainclothes officers. The outlier stations with high crime despite lower ridership may point to fixable infrastructure issues like poor lighting or isolated exits, and security staffing should be scaled seasonally to match summer peaks.
+Our analysis finds that there is a relationship between ridership & crime with variability between stations. Theft dominates, followed by battery and criminal damage, and the highest-crime stations tend to be downtown transfer hubs that also rank highest in ridership though crime rate is higher on the outskirts. Peak times for crime tend to be at noon and Fridays. Rather than distributing security resources evenly, CTA should concentrate them at high-crime, high-ridership stations downtown to most effectively reduce crime. The dominance of theft calls for targeted interventions such as surveillance and plainclothes officers. Resources should be deployed based on time trends with focus on noon and Fridays. The outlier stations with high crime despite lower ridership may point to fixable infrastructure issues like poor lighting or isolated exits and fixing these could significantly lower crime and boost ridership.

@@ -29,8 +29,6 @@ derived_crime = gpd.read_file(derived_data_path / "derived_crime.shp")
 derived_station = gpd.read_file(derived_data_path / "derived_stations.shp")
 gdf_lines = gpd.read_file(raw_data_path / "CTA_RailLines/CTA_RailLines.shp")
 
-derived_crime
-
 # Shapefile column names 
 COL_STATION      = "stationnam"  
 COL_LONGNAME     = "LONGNAME_x"  
@@ -106,9 +104,8 @@ def top_stations_fig(df):
         height=400,
         title='Top 10 Stations by number of crimes'
     ))
-a = top_stations_fig(derived_crime)
-
-a
+top_stations = top_stations_fig(derived_crime)
+top_stations
 
 # Top 10 crime types near CTA stations — companion to top_stations_fig.
 def crime_type_fig(df):
@@ -126,8 +123,6 @@ def crime_type_fig(df):
         .encode(
             alt.X("crime_count:Q", title="Total Count"),
             alt.Y("Crime Type:N", title="Crime Type", sort="-x"),
-            alt.Y("Crime Type:N", title="Crime Type", sort="-x"),
-            alt.Y("Primary Ty:N", title="Crime Type", sort="-x"),
         )
         .properties(
             title="Top 10 Crime Types Near CTA Stations",
@@ -135,6 +130,37 @@ def crime_type_fig(df):
             height=320,
         )
     )
-t = crime_type_fig(derived_crime)
+crime_type = crime_type_fig(derived_crime)
+crime_type
 
-t
+def heatmap(df):
+    df = df.dropna(subset = "Time")
+
+    df["d_of_week"] = pd.to_datetime(df["date"]).dt.day_name()
+    df["hour"] = pd.to_datetime(df['Time'], format='%H:%M:%S').dt.hour
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+    heatmap_data = df.groupby(['d_of_week', 'hour']).size().reset_index(name='crime_count')
+
+    chart = alt.Chart(heatmap_data).mark_rect().encode(
+    x=alt.X('d_of_week:O', 
+            sort=day_order, 
+            title='Day of the Week'),
+    y=alt.Y('hour:O', 
+            title='Hour of the Day (24h)'),
+    color=alt.Color('crime_count:Q', 
+                    scale=alt.Scale(scheme='oranges'), 
+                    title='Number of Crimes'),
+    ).properties(
+    title='Crime Frequency by Day and Hour',
+    width=600,
+    height=400
+    ).configure_axis(
+    labelFontSize=12,
+    titleFontSize=14
+    )
+
+    return chart
+heatmap_crime = heatmap(derived_crime)
+heatmap_crime
+    
